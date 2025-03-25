@@ -464,38 +464,6 @@ Good evening...! &lt;00:00:02.800&gt;Is anyone there?
   </section>
 
   <section class="slide">
-    <h1>Embedded text tracks</h1>
-    <h3>CTA/CEA/EIA-608/708</h3>
-    <ul>
-      <li>Widely used format for closed captions, especially in broadcast</li>
-      <li>Originally encoded in analog broadcast</li>
-      <li>Often <strong>carried inside h.264</strong>/h.265 using <abbr title="Supplemental Enhancement Information">SEI</abbr> messages
-        <ul>
-          <li>One of the very few ways to stream captions through MPEG2-TS</li>
-          <li>Currently recommended by DASH-IF for interoperability</li>
-          <li><em>Can't be detected without some external signalling</em></li>
-        </ul>
-      </li>
-    </ul>
-  </section>
-
-  <section class="slide">
-    <h1>Embedded text tracks</h1>
-    <h3>ID3 Timed Text</h3>
-    <ul>
-      <li>ID3 tags interleaved with an MPEG2-TS stream (usually HLS)<br
-        >... or <a href="https://aomediacodec.github.io/id3-emsg/#introduction">
-          <fourcc>emsg</fourcc> boxes between MP4 fragments
-        </a></li>
-      <li>Normally used for application-specific use cases, not captions<ul>
-        <li>Ad insertion</li>
-        <li>Time-specific metadata</li>
-      </ul></li>
-      <li><em>Can't be detected without some external signalling</em></li>
-    </ul>
-  </section>
-
-  <section class="slide">
     <h1>Cues across segment boundaries</h1>
     <h3>WebVTT in MP4</h3>
     <ul>
@@ -533,6 +501,38 @@ Good evening...! &lt;00:00:02.800&gt;Is anyone there?
         </ul>
       </li>
       <li><strong><em>Should we pick one for the bytestream spec?</em></strong></li>
+    </ul>
+  </section>
+
+  <section class="slide">
+    <h1>Embedded text tracks</h1>
+    <h3>CTA/CEA/EIA-608/708</h3>
+    <ul>
+      <li>Widely used format for closed captions, especially in broadcast</li>
+      <li>Originally encoded in analog broadcast</li>
+      <li>Often <strong>carried inside h.264</strong>/h.265 using <abbr title="Supplemental Enhancement Information">SEI</abbr> messages
+        <ul>
+          <li>One of the very few ways to stream captions through MPEG2-TS</li>
+          <li>Currently recommended by DASH-IF for interoperability</li>
+          <li><em>Can't be detected without some external signalling</em></li>
+        </ul>
+      </li>
+    </ul>
+  </section>
+
+  <section class="slide">
+    <h1>Embedded text tracks</h1>
+    <h3>ID3 Timed Text</h3>
+    <ul>
+      <li>ID3 tags interleaved with an MPEG2-TS stream (usually HLS)<br
+        >... or <a href="https://aomediacodec.github.io/id3-emsg/#introduction">
+          <fourcc>emsg</fourcc> boxes between MP4 fragments
+        </a></li>
+      <li>Normally used for application-specific use cases, not captions<ul>
+        <li>Ad insertion</li>
+        <li>Time-specific metadata</li>
+      </ul></li>
+      <li><em>Can't be detected without some external signalling</em></li>
     </ul>
   </section>
 
