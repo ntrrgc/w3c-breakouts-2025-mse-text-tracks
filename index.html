@@ -61,7 +61,7 @@ h1 + p, h3 + p {
 }
   </style>
  </head>
- <body class="noclick">
+ <body class="noclick hidemouse">
 
   <section class=comment>
    <p>To start the slide show, turn on JavaScript and press
@@ -244,15 +244,8 @@ Is anyone there?</pre>
   </section>
 
   <section class="slide">
-    <h1>Order of cues</h1>
-
-  </section>
-
-  <section class="slide">
     <h1>Delayed parts</h1>
     <pre>
-WEBVTT
-
 WEBVTT
 
 00:00:01.000 --&gt; 00:00:05.000
@@ -425,13 +418,13 @@ Good evening...! &lt;00:00:02.800&gt;Is anyone there?
 
   <section class="slide">
     <h1>Gaps and sparse streams</h1>
-    <h3>Consider other text formats</h3>
+    <h3>Consider other formats</h3>
     <ul>
-      <li>Matroska does not encode WebVTT gaps explicitly</li>
       <li>3GPP Timed Text (common in MP4) <em>
         <a href="https://wiki.gpac.io/xmlformats/TTXT-Format-Documentation/#text-samples"
-          >encodes gaps as cues with empty text</a>
+        >encodes gaps as cues with empty text</a>
       </em></li>
+      <li>Matroska does not encode WebVTT gaps explicitly</li>
     </ul>
   </section>
 
@@ -443,6 +436,7 @@ Good evening...! &lt;00:00:02.800&gt;Is anyone there?
       <li><strong>Video gap:</strong> continuation of the last frame or replacement image.</li>
     </ul>
     <h3><a href="https://github.com/w3c/media-source/issues/359">Use cases</a></h3>
+    <p>Asuming audio and video in separate <samp>SourceBuffer</samp>'s...</p>
     <ul>
       <li><em>Live playback</em> (e.g. sports)<ul>
         <li>Continuing playback even if chunks of audio and/or video are missing</li>
