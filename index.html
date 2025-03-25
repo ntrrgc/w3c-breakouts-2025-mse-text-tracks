@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+
+<html lang="en-us">
+ <head>
+  <meta charset=UTF-8>
+  <meta content="width=device-width" name="viewport">
+  <title>Revisiting in-band text tracks in MediaSource Extensions</title>
+  <link rel="stylesheet" href="Tools/Shower3-2/slides.css">
+  <script src="Tools/b6plus/b6plus.js"></script>
+  <style>
+fourcc {
+  border: 1.5px solid #003eaa;
+  display: inline-block;
+  padding: 0 5px;
+  border-radius: 5px;
+  font-family: monospace;
+  margin: 2px 0;
+}
+.mux_box {
+ border: 1px solid #003eaa;
+}
+.mux_box_title {
+ border-bottom: 1px solid #003eaa;
+ padding: 5px 10px;
+ font-weight: bold;
+ background-color: beige;
+}
+muxcls {
+ font-family: monospace;
+ font-style: italic;
+}
+.mux_box_contents {
+ padding: 0 5px 0px 5px;
+}
+.mux_box_contents > ul {
+ margin: 5px 5px 5px 5px;
+}
+.mux_type {
+ font-style: italic;
+}
+h1:has(+ h3) {
+ margin-bottom: 5px !important;
+}
+h1 + h3 {
+ margin-top: 0 !important;
+}
+multip {
+ display: inline-block;
+ width: 40px;
+ text-align: center;
+ color: #003eaa;
+}
+multip::before {
+ content: "(";
+}
+multip::after {
+ content: ")";
+}
+h1 + p, h3 + p {
+  margin-top: 0;
+}
+  </style>
+ </head>
+ <body class="noclick">
+
+  <section class=comment>
+   <p>To start the slide show, turn on JavaScript and press
+   ‘A’. Return to the index by pressing ‘A’ or ‘Esc’. On a touch
+   screen, use a 3-finger touch. Double click to open a specific
+   slide. In slide mode, use ‘?’ to get a list of available
+   commands.</p>
+  </section>
+
+  <!--=============================================================
+			    Example slides
+  ==============================================================-->
+
+  <div class=progress>
+   <!-- Remove this element if you don't want a progress bar -->
+  </div>
+
+  <div role=region aria-live=assertive>
+    <!-- What a screen reader should say on leaving slide mode,
+	 instead of the default ‘Stopped.’ -->
+    Leaving presentation mode.
+  </div>
+
+  <section class="slide cover clear" id="start">
+   <h1>Revisiting in-band text tracks in MediaSource Extensions</h1>
+   <address>Alicia Boya García<br>(Igalia, W3C MEIG)</address>
+  </section>
+
+  <section class="slide">
+   <h1>Participation policies</h1>
+   <ul>
+    <li><a href="https://www.w3.org/Consortium/cepc/">Code of Ethics and Professional Conduct</a>
+      <ul>
+        <li><samp><a href="https://www.w3.org/Consortium/cepc/">https://www.w3.org/Consortium/cepc/</a></samp></li>
+      </ul></li>
+    <li><a href="https://www.w3.org/policies/antitrust-2024/">Antitrust and Competition Guidance</a><ul>
+      <li><samp><a href="https://www.w3.org/policies/antitrust-2024/">https://www.w3.org/policies/antitrust-2024/</a></samp></li>
+    </li>
+   </ul>
+  </section>
+
+  <section class="slide">
+   <h1>Assumptions</h1>
+   <p>I will assume you have some familiarity with <abbr title="MediaSource Extensions">MSE</abbr> (MediaSource Extensions).</p>
+   <p>Knowledge of specific text track formats is not assumed.</p>
+   <ul>
+    <li><strong>Out-of-band text track</strong>: provided as a separate file: <samp>.srt</samp>, <samp>.vtt</samp></li>
+    <li><strong>In-band text track</strong>: <em>part of a container file</em>: <samp>.mp4</samp>, <samp>.webm</samp>, <samp>.mkv</samp>
+      <ul>
+        <li>The same file can contain video and audio<br
+        >... but it doesn't necessarily have to: <samp>.mks</samp></li>
+      </ul>
+    </li>
+   </ul>
+  </section>
+
+  <section class="slide">
+    <h1>Agenda</h1>
+    <h3>Informative</h3>
+    <ul>
+      <li>Introduction to WebVTT</li>
+      <li>WebVTT representations in MP4 and WebM</li>
+    </ul>
+    <h3>Discussion</h3>
+    <ul>
+      <li>Challenges with text tracks in MSE</li>
+    </ul>
+  </section>
+
+  <section class="cover slide">
+    <h1>Introduction to WebVTT</h1>
+  </section>
+
+  <section class="slide">
+    <h1>WebVTT</h1>
+    <div><a href="https://www.w3.org/TR/webvtt1/"><b>Web</b> <b>V</b>ideo <b>T</b>ext <b>T</b>racks Format</a></div>
+
+    <ul>
+     <li><strong>Reasonable first target</strong> for in-band support in MSE</li>
+     <li>W3C Candidate Recommendation</li>
+     <li>Widely available in browsers for out-of-band text tracks</li>
+     <li>Supported by some non-browser players as well</li>
+    </ul>
+  </section>
+
+  <section class="slide">
+    <h1>Simplest WebVTT</h1>
+    <p>Basic syntax inspired by <a href="https://en.wikipedia.org/wiki/SubRip"><abbr title="SubRip Text">SRT</abbr></a></p>
+    <pre>
+WEBVTT
+
+00:00:01.000 --&gt; 00:00:02.430
+Good evening!
+
+00:00:02.800 --&gt; 00:00:05.000
+Is anyone there?</pre>
+  </section>
+
+  <section class="slide">
+    <h1>Cue settings</h1>
+    <pre>
+WEBVTT
+
+00:00:01.000 --&gt; 00:00:02.430 position:10% align:left
+Good evening!
+
+00:00:02.800 --&gt; 00:00:05.000 position:90% align:right
+Is anyone there?</pre>
+  </section>
+
+  <section class="slide">
+    <h1>Cue IDs</h1>
+    <p>IDs are available to scripting and stylesheets</p>
+    <pre>
+WEBVTT
+
+An ID for an important cue
+00:00:01.000 --&gt; 00:00:02.430
+Good evening!</pre>
+  </section>
+
+
+  <section class="slide">
+    <h1>Comment blocks</h1>
+    <pre>
+WEBVTT
+
+00:00:01.000 --&gt; 00:00:02.430
+Good evening!
+
+NOTE Is it late enough to use "good evening"? I'm not sure.
+
+00:00:02.800 --&gt; 00:00:05.000
+Is anyone there?</pre>
+  </section>
+
+  <section class="slide">
+    <h1>Stylesheets</h1>
+    <pre>
+WEBVTT
+
+STYLE
+::cue {
+  background-color: lightgray;
+  color: black;
+}
+
+00:00:01.000 --&gt; 00:00:02.430
+Good evening!</pre>
+  </section>
+
+  <section class="slide">
+    <h1>Regions</h1>
+    <pre>
+WEBVTT
+
+REGION
+id:fred
+width:40%
+lines:3
+regionanchor:0%,100%
+viewportanchor:10%,90%
+scroll:up</pre>
+  </section>
+
+  <section class="slide">
+    <h1>Cues overlapping in time</h1>
+    <p>The start timestamps of cues must be in increasing order</p>
+<pre>
+WEBVTT
+
+00:00:01.000 --&gt; 00:00:02.430
+Good evening!
+
+00:00:01.400 --&gt; 00:00:06.120 region:sfx_top
+(bells chime)
+
+00:00:02.800 --&gt; 00:00:05.000
+Is anyone there?</pre>
+  </section>
+
+  <section class="slide">
+    <h1>Order of cues</h1>
+
+  </section>
+
+  <section class="slide">
+    <h1>Delayed parts</h1>
+    <pre>
+WEBVTT
+
+WEBVTT
+
+00:00:01.000 --&gt; 00:00:05.000
+Good evening...! &lt;00:00:02.800&gt;Is anyone there?
+
+00:00:01.400 --&gt; 00:00:06.120 region:sfx_top
+(bells chime)</pre>
+  </section>
+
+  <section class="slide cover">
+    <h1>A look at in-band WebVTT<h1>
+  </section>
+
+  <section class="slide">
+   <h1>In-band WebVTT</h1>
+   <p>WebVTT is placed <strong>inside a <em>container format</em></strong>:</p>
+   <ul>
+    <li>ISO BMFF/MP4</li>
+    <li>WebM/Matroska</li>
+    <li>I'm not aware of any MPEG2-TS representation</li>
+   </ul>
+  </section>
+
+  <section class="slide">
+   <h1>WebVTT in ISO BMFF (MP4)</h1>
+   <ul>
+    <li>Base specification: ISO/IEC 14496 Part 12:<br>
+     <q>ISO base media file format</q>
+    </li>
+    <li>WebVTT representation specified in ISO/IEC 14496 Part 30:<br>
+     <q>Timed text and other visual overlays in ISO base media file format</q></li>
+    <li><samp>'codecs'</samp> should contain <samp>'wvtt'</samp></li></li>
+   </ul>
+  </section>
+
+  <section class="slide">
+   <h1>WebVTT in ISO BMFF (MP4)</h1>
+   <h3>Initialization segment (<fourcc>moov</fourcc>)</h3>
+   <p>Text track with a WebVTT-specific <q>sample entry</q> (codec configuration):</p>
+   <div class="mux_box">
+    <div class="mux_box_title">
+     <fourcc>wvtt</fourcc>
+     <muxcls>WVTTSampleEntry</muxcls>
+    </div>
+    <div class="mux_box_contents">
+     <ul>
+      <li><span class="mux_ref"><fourcc>vttC</fourcc> <muxcls>WebVTTConfigurationBox</muxcls>
+       <ul>
+        <li><multip>1</multip> <span class="mux_type">String</span>: WebVTT <q>file header</q></li>
+       </ul>
+      </li>
+      <li><span class="mux_ref"><fourcc>vlab</fourcc> <muxcls>WebVTT<em>SourceLabel</em>Box</muxcls> (optional)
+       <ul>
+        <li><multip>0..1</multip> <span class="mux_type">String</span>: opaque URI.<br
+          >Used to <em>tell apart any two cues from two different movies</em></li>
+       </ul>
+      </li>
+     </ul>
+    </div>
+   </div>
+  </section>
+
+  <section class="slide">
+   <h1>WebVTT in ISO BMFF (MP4)</h1>
+   <h3>Media segment (<fourcc>mdat</fourcc>)</h3>
+   <p>Timing is handled by the container.</p>
+   <p>Cues are split into <em>continuous non-overlapping frames (<q>samples</q>)</em>.</p>
+   <p>The frame contents are ISO BMFF boxes.</p>
+  </section>
+
+  <section class="slide">
+   <h1>WebVTT in ISO BMFF (MP4)</h1>
+   <h3>Media segment (<fourcc>mdat</fourcc>)</h3>
+   <p>Two types of frames:</p>
+   <ul>
+    <li><strong>Gap</strong>: No cues for a certain period<ul>
+     <li><multip>1</multip> <fourcc>vtte</fourcc> <muxcls>VTTEmptyCueBox</muxcls></li>
+     </ul>
+    </li>
+    <li><strong>Non-gap</strong>:<ul>
+      <li><multip>1..*</multip> <fourcc>vttc</fourcc> <muxcls><strong>VTTCueBox</strong></li>
+      <li><multip>0..*</multip> <fourcc>vtta</fourcc> <muxcls>VTTAdditionalBox</muxcls><ul><li>Used for notes/comments</li></ul></li>
+     </ul>
+    </li>
+   </ul>
+  </section>
+
+  <section class="slide">
+   <div class="mux_box">
+    <div class="mux_box_title">
+     <fourcc>vttc</fourcc>
+     <muxcls>VTTCueBox</muxcls>
+    </div>
+    <div class="mux_box_contents">
+     <ul>
+      <li><multip>0..1</multip> <fourcc>vsid</fourcc> <muxcls>CueSourceIDBox</muxcls><ul>
+       <li><span class="mux_type">int32</span>: <em>along with <q>source label</q>, uniquely identifies this cue</em></li>
+       </ul></li>
+      <li><multip>0..1</multip> <fourcc>iden</fourcc> <muxcls>CueIDBox</muxcls>
+       <ul>
+        <li><span class="mux_type">string</span>: WebVTT cue identifier (e.g. for scripts and CSS)</li>
+       </ul></li>
+      <li><multip>0..1</multip> <fourcc>ctim</fourcc> <muxcls>CueTimeBox</muxcls>
+        <ul>
+          <li><span class="mux_type">string</span>: Original cue timestamp (used for cues with delayed parts)</li>
+        </ul></li>
+      <li><multip>0..1</multip> <fourcc>sttg</fourcc> <muxcls>CueSettingsBox</muxcls></li>
+      <li><multip>1</multip> <fourcc>payl</fourcc> <muxcls>CuePayloadBox</muxcls></li>
+     </ul>
+    </div>
+   </div>
+  </section>
+
+  <section class="slide">
+    <h1>WebVTT in WebM</h1>
+    <p>Two competing representations:</p>
+    <ul>
+      <li><samp>D_WEBVTT/kind</samp>: <a href="https://wiki.webmproject.org/webm-metadata/temporal-metadata/webvtt-in-webm"
+          >Early proposal from the WebM project</a> (2012)<ul>
+          <li>✅ Featured in the <a href="https://www.webmproject.org/docs/container/#webvtt-guidelines">WebM documentation</a> <q>WebVTT guidelines</q></li>
+          <li>❌ No file header (and therefore CSS and regions) support</li>
+          <li>❌ Encoding of cues with delayed parts not specified</li>
+        </ul></li>
+      <li><samp>S_TEXT/WEBVTT</samp>: Later <a href="https://datatracker.ietf.org/doc/html/draft-ietf-cellar-codec-14#name-webvtt">Matroska IETF standards track draft</a> (2018)<ul>
+          <li>✅ WebVTT header goes in <samp>CodecPrivate</samp></li>
+          <li>✅ Encoding of cues with delayed parts is specified</li>
+        </ul>
+      </li>
+    </ul>
+  </section>
+
+  <section class="slide">
+    <h1>WebVTT in WebM</h1>
+    <h3>Common to <samp>D_WEBVTT/kind</samp> and <samp>S_TEXT/WEBVTT</samp></h3>
+    <ul>
+      <li>✅ Timing is handled by the container.</li>
+      <li>🤔 One cue = one frame<ul>
+        <li>Overlapping cues are encoded as <em>overlapping frames</em></li>
+      </ul></li>
+      <li>❌ <em>Gaps are not explicitly encoded</em></li>
+      <li>❌ No provision for how to join cues split at segment boundaries</li>
+    </ul>
+  </section>
+
+  <section class="slide cover">
+    <h1>That's enough background...</h1>
+    <h3>Let's talk about MSE</h3>
+  </section>
+
+  <section class="slide">
+    <h1>Cues vs MSE coded frames</h1>
+    <p><q>Coded frames</q> in the MSE spec roughly <strong>correspond to frames in a container</strong>.</p>
+    <p><strong><em>How many coded frames is a WebVTT cue?</em></strong></p>
+    <ul>
+      <li>one MSE coded frame = one WebVTT cue?</li>
+      <li>have it be dependent on the bytestream format (MP4 vs WebM)?</li>
+      <li>have it be an implementation detail?</li>
+      <li>have it be consistent, but something else (maybe similar to MP4)?</li>
+    </ul>
+  </section>
+
+  <section class="slide">
+    <h1>Gaps and sparse streams</h1>
+    <h3>Consider WebVTT inside MP4</h3>
+    <p><strong><em>Is a <muxcls>VTTEmptyCueBox</muxcls> frame an MSE coded frame?</strong></em>
+      <br>... or should it be something new, e.g. <q>coded gap</q>?
+      <br>... or should it be ignored per spec?
+    </p>
+  </section>
+
+  <section class="slide">
+    <h1>Gaps and sparse streams</h1>
+    <h3>Consider other text formats</h3>
+    <ul>
+      <li>Matroska does not encode WebVTT gaps explicitly</li>
+      <li>3GPP Timed Text (common in MP4) <em>
+        <a href="https://wiki.gpac.io/xmlformats/TTXT-Format-Documentation/#text-samples"
+          >encodes gaps as cues with empty text</a>
+      </em></li>
+    </ul>
+  </section>
+
+  <section class="slide">
+    <h1>Gaps and sparse streams</h1>
+    <h3>Consider generalization to non-text streams</h3>
+    <ul>
+      <li><strong>Audio gap:</strong> silent section.</li>
+      <li><strong>Video gap:</strong> continuation of the last frame or replacement image.</li>
+    </ul>
+    <h3><a href="https://github.com/w3c/media-source/issues/359">Use cases</a></h3>
+    <ul>
+      <li><em>Live playback</em> (e.g. sports)<ul>
+        <li>Continuing playback even if chunks of audio and/or video are missing</li>
+      </ul></li>
+      <li>Splicing a <em>silent ad</em> into a video with audio</li>
+    </ul>
+  </section>
+
+  <section class="slide">
+    <h1>SourceBuffer with only a text track</h1>
+    <h3>Currently de-facto unsupported</h3>
+
+    <ul>
+      <li><samp>application/mp4; codecs="wvtt"</samp> <a href="https://www.w3.org/TR/mse-byte-stream-format-isobmff/#mime-parameters">missing in the MSE bytestream spec</a></li>
+      <li>MSE spec currently assumes text streams are discontinuous<ul>
+        <li><strong>Buffered ranges are computed only from video and audio</strong></li>
+        <li>As a result, the SourceBuffer buffered ranges are empty, stalling playback</li>
+      </ul></li>
+      <li><strong><em>Should a SourceBuffer with only a text track work?</em></strong>
+        <ul>
+          <li>... only when using representations with explicit gaps?</li>
+        </ul>
+      </li>
+    </ul>
+  </section>
+
+  <section class="slide">
+    <h1>Embedded text tracks</h1>
+    <h3>CTA/CEA/EIA-608/708</h3>
+    <ul>
+      <li>Widely used format for closed captions, especially in broadcast</li>
+      <li>Originally encoded in analog broadcast</li>
+      <li>Often <strong>carried inside h.264</strong>/h.265 using <abbr title="Supplemental Enhancement Information">SEI</abbr> messages
+        <ul>
+          <li>One of the very few ways to stream captions through MPEG2-TS</li>
+          <li>Currently recommended by DASH-IF for interoperability</li>
+          <li><em>Can't be detected without some external signalling</em></li>
+        </ul>
+      </li>
+    </ul>
+  </section>
+
+  <section class="slide">
+    <h1>Embedded text tracks</h1>
+    <h3>ID3 Timed Text</h3>
+    <ul>
+      <li>ID3 tags interleaved with an MPEG2-TS stream (usually HLS)<br
+        >... or <a href="https://aomediacodec.github.io/id3-emsg/#introduction">
+          <fourcc>emsg</fourcc> boxes between MP4 fragments
+        </a></li>
+      <li>Normally used for application-specific use cases, not captions<ul>
+        <li>Ad insertion</li>
+        <li>Time-specific metadata</li>
+      </ul></li>
+      <li><em>Can't be detected without some external signalling</em></li>
+    </ul>
+  </section>
+
+  <section class="slide">
+    <h1>Cues across segment boundaries</h1>
+    <h3>WebVTT in MP4</h3>
+    <ul>
+      <li>One container frame ≠ one cue</li>
+      <li>The demuxer can tell you're extending the cue</li>
+      <li><strong><em>Can MSE tell you're extending the cue that spans two appends?</em></strong>
+        <ul>
+          <li>Requirement or quality of implementation issue?</li>
+        </ul>
+      </li>
+      <li><strong><em>If it can tell, how should it present it to the user?</em></strong>
+        <ul>
+          <li>Update the cue and emit <samp>"oncuechange"</samp>?</li>
+        </ul>
+      </li>
+    </ul>
+  </section>
+
+  <section class="slide">
+    <h1>WebVTT in WebM MSE bytestream</h1>
+    <h3>Potential problems identified</h3>
+    <ul>
+      <li><samp>S_TEXT/WEBVTT</samp> vs <samp>D_WEBVTT/kind</samp>
+        <ul>
+          <li>As it stands, only <samp>S_TEXT/WEBVTT</samp> can fully support WebVTT</li>
+        </ul>
+      </li>
+      <li>No explicit gaps</li>
+      <li>No way to split cues across segments</li>
+    </ul>
+    <ul>
+      <li><strong><em>Are the existing representations viable for MSE?</em></strong>
+        <ul>
+          <li>If not, what would we need?</li>
+        </ul>
+      </li>
+      <li><strong><em>Should we pick one for the bytestream spec?</em></strong></li>
+    </ul>
+  </section>
+
+  <section class="slide cover clear">
+    <p>This is the end of the slides</p>
+    <p class="shout">Discussion time</p>
+  </section>
+
+  <footer class="comment">
+   <address>Created 17 March 2025 by <a
+   href="mailto:aboya@igalia.com">Alicia Boya García</a>.</address>
+  </footer>
+ </body>
+</html>
+<!-- Local Variables: -->
+<!-- sgml-basic-offset: 1 -->
+<!-- End: -->
